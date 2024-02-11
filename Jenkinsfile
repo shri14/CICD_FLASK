@@ -1,54 +1,65 @@
 pipeline {
     agent any
 
+    environment {
+        FLASK_APP = "app.py"
+        VIRTUALENV_DIR = ".venv"
+    }
+
     stages {
-        stage('Declarative: Checkout SCM') {
+        stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: "${env.BRANCH_NAME}", url: 'your_git_repository_url', credentialsId: 'your_credentials_id'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'sudo apt-get update -y'
-                sh 'sudo apt-get install -y python3-venv'
-                sh 'python3 -m venv venv'
+                sh '''
+                    python3 -m venv ${VIRTUALENV_DIR}
+                    source ${VIRTUALENV_DIR}/bin/activate
+                    pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Run Tests') {
+            steps {
+                sh '''
+                    source ${VIRTUALENV_DIR}/bin/activate
+                    nosetests test_app.py
+                '''
+            }
+        }
+
+        stage('Build App') {
             when {
-                expression {
-                    // Replace 'your_condition_here' with your actual condition
-                    true
-                }
+                expression { branch == 'main' || branch == 'release' }
             }
             steps {
-                script {
-                    // Your test execution steps here
-                    // For example: sh 'pytest'
-                }
+                sh '''
+                    source ${VIRTUALENV_DIR}/bin/activate
+                    python ${FLASK_APP} build
+                '''
             }
         }
 
-        stage('Run Application') {
+        stage('Deploy to Production') {
+            when {
+                expression { branch == 'main' }
+            }
             steps {
-                script {
-                    // Your application execution steps here
-                    // For example: sh 'python app.py'
-                }
+                // Replace with your deployment commands/steps
             }
         }
+    }
 
-        stage('Declarative: Post Actions') {
-            post {
-                always {
-                    script {
-                        // Your post-action steps here
-                        // For example: sh 'pkill -f python app.py'
-                    }
-                }
-            }
+    post {
+        success {
+            archiveArtifacts 'dist/*'
+        }
+        failure {
+            // Send notifications, etc.
         }
     }
 }
