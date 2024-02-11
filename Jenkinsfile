@@ -28,7 +28,8 @@ pipeline {
 
         stage('Run Tests') {
             when {
-                expression {
+                expression { 
+                    {true}
                     
                     return env.BRANCH_NAME == 'master'
                 }
@@ -44,14 +45,12 @@ pipeline {
         stage('Run Application') {
             when {
                 expression {
-                    // Specify the condition for running this stage
-                    // For example, run application for branches other than 'main'
+                   
                     return env.BRANCH_NAME != 'master'
                 }
             }
             steps {
                 script {
-                    // Add steps to run the application
                     sh 'python app.py &'
                 }
             }
@@ -61,7 +60,6 @@ pipeline {
     post {
         always {
             script {
-                // Stop the application (if running)
                 sh 'pkill -f python app.py'
             }
         }
