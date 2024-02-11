@@ -17,12 +17,10 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Update packages
-                    sh 'apt-get update -y'
+                   
+                    sh 'sudo apt-get update -y'
 
-                    // Install dependencies or perform other necessary steps
-                    // For example, install Python virtual environment
-                    sh 'apt-get install -y python3-venv'
+                    sh 'sudo apt-get install -y python3-venv'
                     sh 'python3 -m venv venv'
                 }
             }
@@ -31,8 +29,7 @@ pipeline {
         stage('Run Tests') {
             when {
                 expression {
-                    // Specify the condition for running this stage
-                    // For example, run tests only for the 'main' branch
+                    
                     return env.BRANCH_NAME == 'master'
                 }
             }
