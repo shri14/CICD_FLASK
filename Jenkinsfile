@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        HOME = pwd()
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -11,10 +15,8 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
-                    sh 'apt-get update'
-                    sh 'apt-get install -y python3-pip'
-                    sh 'python3 -m pip install virtualenv'
-                    sh 'python3 -m virtualenv venv'
+                    // Set up virtual environment
+                    sh 'python3 -m venv venv'
                     sh 'source venv/bin/activate && pip install -r requirements.txt'
                 }
             }
@@ -23,7 +25,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    sh 'python -m unittest discover'
+                    sh 'source venv/bin/activate && python -m unittest discover'
                 }
             }
         }
@@ -31,7 +33,8 @@ pipeline {
         stage('Run Application') {
             steps {
                 script {
-                    sh 'source venv/bin/activate && python app.py &'
+                    // Start the Flask app in the background
+                    sh 'source venv/bin/activate && nohup python app.py > /dev/null 2>&1 &'
                 }
             }
         }
