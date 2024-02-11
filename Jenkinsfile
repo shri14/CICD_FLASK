@@ -1,66 +1,53 @@
 pipeline {
     agent any
 
-    environment {
-        HOME = '/var/lib/jenkins'
-    }
-
     stages {
-        stage('Checkout SCM') {
+        stage('Declarative: Checkout SCM') {
             steps {
-                script {
-                    checkout scm
-                }
+                checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                script {
-                   
-                    sh 'sudo apt-get update -y'
-
-                    sh 'sudo apt-get install -y python3-venv'
-                    sh 'python3 -m venv venv'
-                }
+                sh 'sudo apt-get update -y'
+                sh 'sudo apt-get install -y python3-venv'
+                sh 'python3 -m venv venv'
             }
         }
 
         stage('Run Tests') {
             when {
-                expression { 
-                    {true}
-                    
-                    return env.BRANCH_NAME == 'master'
+                expression {
+                    // Replace 'your_condition_here' with your actual condition
+                    true
                 }
             }
             steps {
                 script {
-                    // Add steps to run tests
-                    sh 'pytest'
+                    // Your test execution steps here
+                    // For example: sh 'pytest'
                 }
             }
         }
 
         stage('Run Application') {
-            when {
-                expression {
-                   
-                    return env.BRANCH_NAME != 'master'
-                }
-            }
             steps {
                 script {
-                    sh 'python app.py &'
+                    // Your application execution steps here
+                    // For example: sh 'python app.py'
                 }
             }
         }
-    }
 
-    post {
-        always {
-            script {
-                sh 'pkill -f python app.py'
+        stage('Declarative: Post Actions') {
+            post {
+                always {
+                    script {
+                        // Your post-action steps here
+                        // For example: sh 'pkill -f python app.py'
+                    }
+                }
             }
         }
     }
