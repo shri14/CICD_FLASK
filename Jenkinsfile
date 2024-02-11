@@ -6,10 +6,19 @@ pipeline {
         FLASK_ENV = 'test'
     }
 
+    tools {
+        // Assuming Python3 is configured in Jenkins
+        python 'Python3'
+    }
+
     stages {
         stage('Install dependencies') {
             steps {
                 script {
+                    // Upgrade pip
+                    sh 'python -m pip install --upgrade pip'
+
+                    // Install dependencies
                     sh 'pip install -r requirements.txt'
                 }
             }
