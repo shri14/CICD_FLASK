@@ -1,66 +1,51 @@
 pipeline {
-    agent any // Use any available node
-
-    environment {
-        // Define any necessary environment variables for your app
-        FLASK_APP = "app.py" // Replace with your Flask app's entry point
-        VIRTUALENV_DIR = ".venv" // Replace with your desired virtual environment name
-    }
+    agent any
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git branch: "${env.BRANCH_NAME}", url: 'your_git_repository_url', credentialsId: 'your_credentials_id'
+                checkout scm
             }
         }
 
-        // Step 2: Install dependencies using virtual environment
         stage('Install Dependencies') {
             steps {
-                sh 'python3 -m venv ${VIRTUALENV_DIR}' // Create virtual environment
-                sh 'source ${VIRTUALENV_DIR}/bin/activate' // Activate virtual environment
-                sh 'pip install -r requirements.txt' // Install dependencies
+                script {
+                    sh 'python3 -m venv venv'
+                    sh 'source venv/bin/activate && pip install -r requirements.txt'
+                }
             }
         }
 
-        // Step 3: Run tests
         stage('Run Tests') {
             steps {
-                sh 'source ${VIRTUALENV_DIR}/bin/activate' // Activate virtual environment
-                sh 'nosetests test_app.py' // Or your chosen test runner
+                script {
+                    sh 'python -m unittest discover'
+                }
             }
         }
 
-        // Step 4: Build the app (customize or remove if not applicable)
-        stage('Build App') {
-            when {
-                expression { branch == 'master' || branch == 'release' } // Only build on certain branches
-            }
+        stage('Run Application') {
             steps {
-                sh 'source ${VIRTUALENV_DIR}/bin/activate' // Activate virtual environment
-                sh 'python ${FLASK_APP} build' // Or your build command
-            }
-        }
-
-        // Step 5: Deploy the app (optional, customize based on deployment strategy)
-        stage('Deploy to Production') {
-            when {
-                expression { branch == 'master' } // Only deploy on the main branch
-            }
-            steps {
-                // Replace with your deployment commands/steps
-                // Example: upload artifact to a server, run a script on a deployment server, etc.
+                script {
+                    sh 'source venv/bin/activate && python app.py &'
+                }
             }
         }
     }
 
-    // Step 6: Post-build actions (optional, add as needed)
     post {
+        always {
+            script {
+                // Clean up: stop the Flask app
+                sh 'pkill -f "python app.py"'
+            }
+        }
         success {
-            archiveArtifacts 'dist/*' // Optionally archive build artifacts
+            echo 'Pipeline succeeded! Trigger further actions here.'
         }
         failure {
-            // Send notifications, etc.
+            echo 'Pipeline failed! Notify or take corrective actions.'
         }
     }
 }
