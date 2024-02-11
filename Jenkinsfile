@@ -29,14 +29,34 @@ pipeline {
         }
 
         stage('Run Tests') {
+            when {
+                expression {
+                    // Specify the condition for running this stage
+                    // For example, run tests only for the 'main' branch
+                    return env.BRANCH_NAME == 'master'
+                }
+            }
             steps {
-                // Add steps to run tests
+                script {
+                    // Add steps to run tests
+                    sh 'pytest'
+                }
             }
         }
 
         stage('Run Application') {
+            when {
+                expression {
+                    // Specify the condition for running this stage
+                    // For example, run application for branches other than 'main'
+                    return env.BRANCH_NAME != 'master'
+                }
+            }
             steps {
-                // Add steps to run the application
+                script {
+                    // Add steps to run the application
+                    sh 'python app.py &'
+                }
             }
         }
     }
