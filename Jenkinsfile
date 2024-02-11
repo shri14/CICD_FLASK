@@ -2,65 +2,49 @@ pipeline {
     agent any
 
     environment {
-        FLASK_APP = "app.py"
-        VIRTUALENV_DIR = ".venv"
+        FLASK_APP = 'app.py'
+        FLASK_ENV = 'test'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Install dependencies') {
             steps {
-                git branch: "${env.BRANCH_NAME}", url: 'your_git_repository_url', credentialsId: 'your_credentials_id'
+                script {
+                    sh 'pip install -r requirements.txt'
+                }
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Run tests') {
             steps {
-                sh '''
-                    python3 -m venv ${VIRTUALENV_DIR}
-                    source ${VIRTUALENV_DIR}/bin/activate
-                    pip install -r requirements.txt
-                '''
+                script {
+                    sh 'python test_app.py'
+                }
             }
         }
 
-        stage('Run Tests') {
+        stage('Build and Deploy') {
             steps {
-                sh '''
-                    source ${VIRTUALENV_DIR}/bin/activate
-                    nosetests test_app.py
-                '''
-            }
-        }
-
-        stage('Build App') {
-            when {
-                expression { branch == 'master' || branch == 'release' }
-            }
-            steps {
-                sh '''
-                    source ${VIRTUALENV_DIR}/bin/activate
-                    python ${FLASK_APP} build
-                '''
-            }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                expression { branch == 'master' }
-            }
-            steps {
-                // Replace with your deployment commands/steps
+                script {
+                    sh 'python app.py &'
+                }
             }
         }
     }
 
     post {
-        success {
-            archiveArtifacts 'dist/*'
+        always {
+            script {
+                sh 'pkill -f "python app.py"'
+            }
         }
+
+        success {
+            echo 'Pipeline succeeded! Deploy your application.'
+        }
+
         failure {
-            // Add your desired failure actions here, e.g., notifications
-            // Example: emailext body: 'Build failed!', subject: 'CI/CD Pipeline Failure', to: 'your-email@example.com'
+            echo 'Pipeline failed! Check the build logs.'
         }
     }
 }
