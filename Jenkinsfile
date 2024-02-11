@@ -4,22 +4,31 @@ pipeline {
     environment {
         FLASK_APP = 'app.py'
         FLASK_ENV = 'test'
+        PATH_TO_PYTHON = '/usr/bin/python3'
+        PATH_TO_PIP = '/usr/bin/pip3'
     }
 
-    tools {
-        // Assuming Python3 is configured in Jenkins
-        python 'Python3'
-    }
+    // stages {
+    //     stage('Checkout') {
+    //         steps {
+    //             script {
+    //                 git 'https://github.com/shri14/CICD_FLASK.git'
+    //             }
+    //         }
+    //     }
 
-    stages {
+        stage('Update Werkzeug') {
+            steps {
+                script {
+                    sh "${PATH_TO_PIP} install --upgrade Werkzeug==2.0.1"
+                }
+            }
+        }
+
         stage('Install dependencies') {
             steps {
                 script {
-                    // Upgrade pip
-                    sh 'python -m pip install --upgrade pip'
-
-                    // Install dependencies
-                    sh 'pip install -r requirements.txt'
+                    sh "${PATH_TO_PIP} install -r requirements.txt"
                 }
             }
         }
@@ -27,7 +36,7 @@ pipeline {
         stage('Run tests') {
             steps {
                 script {
-                    sh 'python test_app.py'
+                    sh "${PATH_TO_PYTHON} test_app.py"
                 }
             }
         }
@@ -35,25 +44,33 @@ pipeline {
         stage('Build and Deploy') {
             steps {
                 script {
-                    sh 'python app.py &'
+                    sh "${PATH_TO_PYTHON} app.py &"
+                    echo 'Flask application is starting...'
+                    sleep 10
+                    echo 'Flask application is running at http://43.204.238.129:5000/'
                 }
             }
         }
-    }
 
-    post {
-        always {
-            script {
-                sh 'pkill -f "python app.py"'
+        stage('Declarative: Post Actions') {
+            steps {
+                script {
+                    sh 'pkill -f "python3 app.py"'
+                }
             }
-        }
-
-        success {
-            echo 'Pipeline succeeded! Deploy your application.'
-        }
-
-        failure {
-            echo 'Pipeline failed! Check the build logs.'
+            post {
+                always {
+                    script {
+                        sleep 5
+                    }
+                }
+                success {
+                    echo 'Pipeline succeeded! Deploy your application.'
+                }
+                failure {
+                    echo 'Pipeline failed! Check the build logs.'
+                }
+            }
         }
     }
 }
