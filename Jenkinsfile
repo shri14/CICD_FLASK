@@ -11,6 +11,8 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
+                    sh 'apt-get update'
+                    sh 'apt-get install -y python3-pip'
                     sh 'python3 -m pip install virtualenv'
                     sh 'python3 -m virtualenv venv'
                     sh 'source venv/bin/activate && pip install -r requirements.txt'
