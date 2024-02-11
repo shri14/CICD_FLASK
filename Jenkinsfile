@@ -34,7 +34,7 @@ pipeline {
 
         stage('Build App') {
             when {
-                expression { branch == 'main' || branch == 'release' }
+                expression { branch == 'master' || branch == 'release' }
             }
             steps {
                 sh '''
@@ -46,7 +46,7 @@ pipeline {
 
         stage('Deploy to Production') {
             when {
-                expression { branch == 'main' }
+                expression { branch == 'master' }
             }
             steps {
                 // Replace with your deployment commands/steps
@@ -59,7 +59,8 @@ pipeline {
             archiveArtifacts 'dist/*'
         }
         failure {
-            // Send notifications, etc.
+            // Add your desired failure actions here, e.g., notifications
+            // Example: emailext body: 'Build failed!', subject: 'CI/CD Pipeline Failure', to: 'your-email@example.com'
         }
     }
 }
